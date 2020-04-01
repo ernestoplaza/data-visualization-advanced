@@ -1,224 +1,189 @@
-# Map Background Scale
+# Pinning locations Spain + Radius scale + Background Scale
 
-Our boss got a link form a spanish news paper about choronavirus stats, he got
-astonished by the charts that we represented (https://elpais.com/sociedad/2020/03/03/actualidad/1583227754_157787.html), now we have to implement a chart that
-colours each european country depending on heavhy they have been affected by Choronavirus.
+Would you like to know how to make a map of Spain with a Radius Scale depending of the location affected cases and a background scale per community? Have you got a couple of available hours?
+So let's get busy with this!!
 
-![Europe Chart Corona Virus](./content/chart.png)
+![Spain Chart Corona Virus](./content/chart.png)
 
-Codesandbox: https://codesandbox.io/s/aged-sunset-y8n63
 
 # Steps
 
-- We will take as starting point our previous example: _00-render-map-hover_ let's copy
-  the content and execute _npm start_
+We will take as starting point our previous example: _data-visualization-mandatory_ let's copy the content from that folder and execute _npm install_.
 
 ```bash
-npm start
+npm install
 ```
+This task has something new from the last task due to we have added a color scale for each community depending the affected cases.
 
-We have the following information (07 March)
-
-| Country         | Infected |
-| --------------- | :------: |
-| Italy           |   4636   |
-| Germany         |   687    |
-| France          |   613    |
-| Spain           |   443    |
-| Switzerland     |   210    |
-| England         |   163    |
-| Sweden          |   137    |
-| Netherdlands    |   128    |
-| Norway          |   113    |
-| Belgium         |   109    |
-| Austria         |    55    |
-| Greek           |    46    |
-| Island          |    45    |
-| San Marino      |    23    |
-| Denmark         |    23    |
-| Irlanda         |    18    |
-| Chzech Republic |    18    |
-| Finlandia       |    15    |
-| Croacia         |    11    |
-| Estonia         |    10    |
-| Portugal        |    8     |
-| Rusia           |    8     |
-| Eslovenia       |    6     |
-| Rumania         |    6     |
-| Polonia         |    5     |
-| Luxemburgo      |    3     |
-| Hungría         |    3     |
-| Macedony        |    1     |
-| Lituania        |    1     |
-| Mónaco          |    1     |
-
-- Let's port it to json (respecting the name of the countries that we are using
-  in our europe map)
-
-_./src/stats.ts_
-
-```typescript
-export const coronaVirusAffectedByCountry = [
-  { country: "Italy", affected: 4636 },
-  { country: "Germany", affected: 687 },
-  { country: "France", affected: 613 },
-  { country: "Spain", affected: 443 },
-  { country: "Switzerland", affected: 210 },
-  { country: "England", affected: 163 },
-  { country: "Sweden", affected: 137 },
-  { country: "Netherdlands", affected: 128 },
-  { country: "Norway", affected: 113 },
-  { country: "Austria", affected: 55 },
-  { country: "Greece", affected: 46 },
-  { country: "Iceland", affected: 45 },
-  { country: "San Marino", affected: 23 },
-  { country: "Denmark", affected: 23 },
-  { country: "Ireland", affected: 18 },
-  { country: "Czech Republic", affected: 18 },
-  { country: "Finland", affected: 15 },
-  { country: "Croatia", affected: 11 },
-  { country: "Estonia", affected: 10 },
-  { country: "Portugal", affected: 8 },
-  { country: "Russia", affected: 8 },
-  { country: "Romania", affected: 6 },
-  { country: "Poland", affected: 5 },
-  { country: "Luxembourg", affected: 3 },
-  { country: "Hungary", affected: 3 },
-  { country: "Macedonia", affected: 1 },
-  { country: "Lithuania", affected: 1 },
-  { country: "Monaco", affected: 1 }
-];
-```
-
-- Le't import the new set of data into our _index.ts_ file:
+First, there is a new function called _assignCCAABackgroundColor_ which takes two arguments, a _name_ from each community and a _ResultEntry_ and returns a color depending the affected cases.
 
 _./src/index.ts_
-
 ```diff
-const europejson = require("./europe.json");
-+ import { coronaVirusAffectedByCountry } from "./stats";
++ assignCCAABackgroundColor = (comunidad: string,
++ data: ResultEntry[]) => {}
 ```
-
-- If we check the values the start from 0 to 5000 approx, let's assign a range of colores for that
-  domain:
+_maxAffected_ will return the max value infected cases of the entry array.
+```diff
+ assignCCAABackgroundColor = (comunidad: string,
+ data: ResultEntry[]) => {
++  const maxAffected =
++  data.reduce(
++  (max, item) =>
++  (item.value > max ?
++  item.value : max),0);
+}
+```
+Once we have our max value, we need to assign a color depending that value, our domain will be from 0 to the max value calculated between these values will be values multiplying 0.05, 0.1, 0.4, 0.5 and 0.6 for the max value, this will be our domain and the range will be each color. This scale was done with a _scaleThreshold_
 
 _./src/index.ts_
-
 ```diff
-import { coronaVirusAffectedByCountry } from "./stats";
-
-+ // set the affected color scale
-+ var color = d3
-+  .scaleThreshold<number, string>()
-+  .domain([0, 1, 100, 500, 700, 1000])
+assignCCAABackgroundColor = (comunidad: string, data: ResultEntry[]) => {
+  const maxAffected =
+  data.reduce(
+    (max, item) => (item.value > max ? item.value : max),
+    0);
+  
++  const color =
++  d3
++  .scaleThreshold<
++  number, string>()
++  .domain([
++  0,
++  0.05*maxAffected,
++  0.1*maxAffected,
++  0.4*maxAffected,
++  0.5*maxAffected,
++  0.6*maxAffected,                +  maxAffected])
 +  .range([
 +    "#FFFFF",
-+    "#FFE8E5",
-+    "#F88F70",
-+    "#CD6A4E",
-+    "#A4472D",
-+    "#7B240E",
-+    "#540000"
++    "#E1E9F4",
++    "#C4D4E9",
++    "#A5BFDE",
++    "#839dbb",
++    "#637d99",
++    "#445e79",
++    "#25415A"
 +  ]);
+};
 ```
-
-- Let's create a help function to map from country to color: we have to take into account
-  that some European countries are not affected (won't exists on our list).
-
+To end this function we define _entry_ that will be map with a value and a name, this variable will find the name taken as argument inside of the other argument _data_ and at the end the function will return the value that _color_ will assign for the value of infected cases inside of the variable.
 ```diff
-var color = d3
+assignCCAABackgroundColor = (comunidad: string, data: ResultEntry[]) => {
+  const maxAffected =
+  data.reduce(
+    (max, item) => (item.value > max ? item.value : max),
+    0);
+  
+  const color =
+  d3
   .scaleThreshold<number, string>()
-  .domain([0, 1, 100, 500, 700, 1000])
+  .domain([0, 0.05*maxAffected, 0.1*maxAffected, 0.4*maxAffected, 0.5*maxAffected, 0.6*maxAffected, maxAffected])
   .range([
     "#FFFFF",
-    "#FFE8E5",
-    "#F88F70",
-    "#CD6A4E",
-    "#A4472D",
-    "#7B240E",
-    "#540000"
+    "#E1E9F4",
+    "#C4D4E9",
+    "#A5BFDE",
+    "#839dbb",
+    "#637d99",
+    "#445e79",
+    "#25415A"
   ]);
-
-+ const assignCountryBackgroundColor = (countryName: string) => {
-+  const item = coronaVirusAffectedByCountry.find(
-+    item => item.country === countryName
-+  );
-+
-+  if (item) {
-+    console.log(item.affected);
-+  }
-+
-+  return item ? color(item.affected) : color(0);
-+ };
+  
++  const item = data.find(
++    item =>
++ item.name === comunidad);
++  return item ? color
++ (item.+value) : color(0);
+};
 ```
+Now that the scale of colors was created, we will add to the function called in the other example _updateRadius_ a variable called ccaa that will select all communities and each one will be filled with the appropiate color that _assignCCAABackgroundColor_ will assign it. The other part of the function will be exactly equal than _updateRadius_ in the other example, so this function was called _updateColorsAndRadius_ and will receive only an argument(_data_).
 
-- Now it's time to remove features that we need on the map render (mouse out, mouseover):
-
+_./src/index.ts_
 ```diff
-svg
-  .selectAll("path")
-  .data(geojson["features"])
-  .enter()
-  .append("path")
-  .attr("class", "country")
-  // data loaded from json file
-  .attr("d", geoPath as any)
--  .on("mouseover", function(d, i) {
--    d3.select(this).attr("class", "selected-country");
--  })
--  .on("mouseout", function(d, i) {
--    d3.select(this).attr("class", "country");
--  });
+const updateColorsAndRadius = (data: ResultEntry[]) => {
++  const ccaa = svg
++ .selectAll("path");
++  ccaa
++    .merge(ccaa as any)
++    .transition()
++    .duration(500)
++    .attr("class", "country")
++    .style("fill",
++    function(d: any){
++      return assignCCAABackgroundColor(
++  d.properties.NAME_1,
++  data);
++    })
+
+  const circles = svg
+  .selectAll("circle");
+    circles
+      .data
+      (latLongCommunities)
+      .enter()
+      .append("circle")
+      .merge(
+        circles as any)
+      .transition()
+      .duration(500)
+      .attr(
+        "class",
+        "affected-marker")
+      .attr("r",
+      d =>               calculateRadiusBasedOnAffectedCases(d.name, data))
+      .attr("cx",
+      d =>
+      aProjection(
+        [d.long, d.lat])[0]
+        )
+      .attr("cy",
+      d =>
+      aProjection(
+        [d.long, d.lat])[1]
+        )
+    };
 ```
+Due to _updateRadius_ was renamed as _updateColorsAndRadiusupdateColors_ adding a variable which change the color of each community too, so let's make this modification in our code.
 
-- And add a fill style to match country name with corresponding background color (based on
-  coronavirus affected people):
-
+_./src/index.ts_
 ```diff
-svg
-  .selectAll("path")
-  .data(geojson["features"])
-  .enter()
-  .append("path")
-  .attr("class", "country")
-+  .style("fill", function(d: any) {
-+    return assignCountryBackgroundColor(d.properties.geounit);
-+  })
+  document
+  .getElementById("1March")
+  .addEventListener("click", function handleInfected1March() {
+-    updateRadius(stats1March);
++    updateColorsAndRadius(stats1March);
+  });
 
-  // data loaded from json file
-  .attr("d", geoPath as any)
+  document
+  .getElementById("23March")
+  .addEventListener("click", function handleInfected23March() {
+-    updateRadius(stats23March);
++    updateColorsAndRadius(stats23March);
+  });
 ```
+To complete our styling journey, let's modify our country css class with a different stroke and fill.
 
-- To complete our styling journey, let's modify our country css class to provide a default
-  background color to our countrie.
-
+_./src/map.css_
 ```diff
 .country {
   stroke-width: 1;
-  stroke: #2f4858;
+-  stroke: #2f4858;
++  stroke: #FFFF;
 -  fill: #008c86;
-+  fill: #FFFFFF;
++  fill: ##E1E9F4;
 }
 
-- .selected-country {
--  stroke-width: 1;
--  stroke: #bc5b40;
--  fill: #f88f70;
+.affected-marker {
+  stroke-width: 1;
+  stroke: #bc5b40;
+  fill: #f88f70;
+  fill-opacity: 0.7;
+}
 }
 ```
 
-- Let's give a try
+Congratulations! The task ends here! Now if you want to look at the final result let's give a try!
 
 ```bash
 npm start
 ```
-
-# About Basefactor + Lemoncode
-
-We are an innovating team of Javascript experts, passionate about turning your ideas into robust products.
-
-[Basefactor, consultancy by Lemoncode](http://www.basefactor.com) provides consultancy and coaching services.
-
-[Lemoncode](http://lemoncode.net/services/en/#en-home) provides training services.
-
-For the LATAM/Spanish audience we are running an Online Front End Master degree, more info: http://lemoncode.net/master-frontend
